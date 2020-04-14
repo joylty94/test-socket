@@ -8,17 +8,45 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
-//var http = require("http").Server(app);
 app.io = require("socket.io")();
 
-app.io.on('connection', function (socket) {
-  console.log('a user connected');
-  socket.broadcast.emit('hi');
+var numUsers = 0;
 
-  socket.on('chat message', function (msg) {
-    console.log('message: ' + msg);
-    app.io.emit('chat message', msg);
+app.io.on('connection', function (socket) {
+  var addedUser = false;
+
+  socket.on('new message', (data) => {
+    socket.broadcast.emit('new message', {
+      username: socket.username,
+      message: data
+    });
+    socket.emit('new message', {
+      username: socket.username,
+      message: data
+    });
   });
+
+  socket.on('add user', (username) => {
+    if (addedUser) return;
+
+    // we store the username in the socket session for this client
+    socket.username = username;
+    ++numUsers;
+    addedUser = true;
+    socket.emit('login', {
+      numUsers: numUsers
+    });
+    // echo globally (all clients) that a person has connected
+    socket.broadcast.emit('user joined', {
+      username: socket.username,
+      numUsers: numUsers
+    });
+  });
+
+  // socket.on('chat message', function (msg) {
+  //   console.log('message: ' + msg);
+  //   app.io.emit('chat message', msg);
+  // });
 });
 
 // view engine setup
