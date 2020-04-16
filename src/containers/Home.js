@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { TextField, Button } from '@material-ui/core';
@@ -17,23 +17,41 @@ const Home = () => {
     const [username, setUsername] = useState('');
     const dispatch = useDispatch();
     const { socket } = useSelector(state => state.socket);
+    const [ socketData, setSocketData ] = useState([])
+    const [ socketData2, setSocketData2 ] = useState([])
+
+    const isInitialMount = useRef(true);
     
     useEffect(() => {
-        socketIO.on('new message', function (data) {
-            dispatch({
-                type: SOCKET_DATA,
-                data: data.message
-            })
-        });
+        if (isInitialMount.current) {
+            console.log('mount')
+            isInitialMount.current = false;
+            socketIO.on('new message', function (data) {
+                // dispatch({
+                //     type: SOCKET_DATA,
+                //     data: data.message
+                // })
+                console.log('data', data)
+                setSocketData(prev => [...prev, data])
+                // setSocketData2([...socketData])
+            });
+        } else {
+            console.log('update')
+            setSocketData2(socketData)
+        }
 
-        socketIO.on('user joined', (data) => {
-            console.log(data.username + ' joined');
-            dispatch({
-                type: SOCKET_DATA,
-                data: `${data.username}님이 들어 오셨습니다.`
-            })
-        });
-    }, [])
+
+        // socketIO.on('user joined', (data) => {
+        //     console.log(data.username + ' joined');
+        //     dispatch({
+        //         type: SOCKET_DATA,
+        //         data: `${data.username}님이 들어 오셨습니다.`
+        //     })
+        // });
+        // return () => {
+        //     socketIO.off('new message')
+        // }
+    }, [socketData])
 
     const onChangeValue = (e) => {
         setValue(e.target.value)
@@ -45,10 +63,6 @@ const Home = () => {
     const onClickSocket = () => {
         if(value !== '' && value.trim() !== ''){
             socketIO.emit('new message', value)
-            // dispatch({
-            //     type: SOCKET_DATA,
-            //     data: value
-            // })
             setValue('')
         }
     }
@@ -57,10 +71,6 @@ const Home = () => {
         if (e.keyCode === 13) {
             if (value !== '' && value.trim() !== '') {
             socketIO.emit('new message', value)
-            // dispatch({
-            //     type: SOCKET_DATA,
-            //     data: value
-            // })
             setValue('')
             }
         }
@@ -83,6 +93,8 @@ const Home = () => {
             }
         }
     }
+    console.log('socketData', socketData)
+    console.log('socketData2', socketData2)
     return(
         <div className="App">
             {
@@ -90,10 +102,10 @@ const Home = () => {
                     <div className="socket-wrap">
                         <div className="socket-list">
                             {
-                                socket && socket.length > 0 && socket.map((c, i) => {
+                                socketData && socketData.length > 0 && socketData.map((c, i) => {
                                     return (
                                         <ListItem key={i}>
-                                            <ListItemText primary={c} />
+                                            <ListItemText primary={`${c.username} : ${c.message}`} />
                                         </ListItem>
                                     )
                                 })
