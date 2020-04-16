@@ -23,22 +23,33 @@ const Home = () => {
     const isInitialMount = useRef(true);
     
     useEffect(() => {
-        if (isInitialMount.current) {
-            console.log('mount')
-            isInitialMount.current = false;
-            socketIO.on('new message', function (data) {
-                // dispatch({
-                //     type: SOCKET_DATA,
-                //     data: data.message
-                // })
-                console.log('data', data)
-                setSocketData(prev => [...prev, data])
-                // setSocketData2([...socketData])
-            });
-        } else {
-            console.log('update')
-            setSocketData2(socketData)
-        }
+        // if (isInitialMount.current) {
+        //     console.log('mount')
+        //     isInitialMount.current = false;
+        //     socketIO.on('new message', function (data) {
+        //         // dispatch({
+        //         //     type: SOCKET_DATA,
+        //         //     data: data.message
+        //         // })
+        //         console.log('data', data)
+        //         setSocketData(prev => [...prev, data])
+        //         // setSocketData2([...socketData])
+        //     });
+        // } else {
+        //     console.log('update')
+        //     setSocketData2(socketData)
+        // }
+
+        console.log('mount')
+        socketIO.on('new message', function (data) {
+            // dispatch({
+            //     type: SOCKET_DATA,
+            //     data: data.message
+            // })
+            console.log('data', data)
+            setSocketData(prev => [...prev, data])
+            setSocketData2(prev => [...socketData])
+        });
 
 
         // socketIO.on('user joined', (data) => {
@@ -48,9 +59,10 @@ const Home = () => {
         //         data: `${data.username}님이 들어 오셨습니다.`
         //     })
         // });
-        // return () => {
-        //     socketIO.off('new message')
-        // }
+
+        return () => {
+            socketIO.off('new message')
+        }
     }, [socketData])
 
     const onChangeValue = (e) => {
@@ -93,8 +105,10 @@ const Home = () => {
             }
         }
     }
+
     console.log('socketData', socketData)
     console.log('socketData2', socketData2)
+
     return(
         <div className="App">
             {
